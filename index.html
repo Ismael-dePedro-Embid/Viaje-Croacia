@@ -193,7 +193,6 @@
 <script>
 (function () {
   const PASSWORD = 'plitvice';
-  const KEY = 'croacia2026_access_ok';
 
   function unlock() {
     document.body.classList.remove('auth-locked');
@@ -204,8 +203,8 @@
   function checkPassword() {
     const input = document.getElementById('authPassword');
     const error = document.getElementById('authError');
+
     if ((input.value || '').trim().toLowerCase() === PASSWORD) {
-      localStorage.setItem(KEY, '1');
       unlock();
     } else {
       error.textContent = 'Contraseña incorrecta';
@@ -213,21 +212,17 @@
     }
   }
 
-  if (localStorage.getItem(KEY) === '1') {
-    unlock();
-  } else {
-    document.addEventListener('DOMContentLoaded', function () {
-      const input = document.getElementById('authPassword');
-      const button = document.getElementById('authButton');
-      if (button) button.addEventListener('click', checkPassword);
-      if (input) {
-        input.focus();
-        input.addEventListener('keydown', function (e) {
-          if (e.key === 'Enter') checkPassword();
-        });
-      }
-    });
-  }
+  document.addEventListener('DOMContentLoaded', function () {
+    const input = document.getElementById('authPassword');
+    const button = document.getElementById('authButton');
+    if (button) button.addEventListener('click', checkPassword);
+    if (input) {
+      input.focus();
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') checkPassword();
+      });
+    }
+  });
 })();
 </script>
 
