@@ -1,8 +1,9 @@
 {
   "name": "Croacia 2026",
   "short_name": "Croacia",
+  "id": "/Viaje-Croacia/",
   "start_url": "/Viaje-Croacia/",
-"scope": "/Viaje-Croacia/",
+  "scope": "/Viaje-Croacia/",
   "display": "standalone",
   "background_color": "#f5f4f0",
   "theme_color": "#0f6e47",
@@ -12,13 +13,13 @@
       "src": "icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
       "src": "icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     }
   ]
 }
