@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Croacia 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css" />
+<style>
+  :root {
+    --bg: #f5f4f0;
+    --surface: #ffffff;
+    --surface2: #f0efe9;
+    --border: rgba(0,0,0,0.08);
+    --border2: rgba(0,0,0,0.14);
+    --text: #1a1917;
+    --text2: #6b6860;
+    --text3: #a8a69f;
+    --green: #0f6e47;
+    --green-bg: rgba(15,110,71,0.07);
+    --green-border: rgba(15,110,71,0.25);
+    --amber: #8a5c00;
+    --amber-bg: rgba(138,92,0,0.08);
+    --amber-border: rgba(138,92,0,0.25);
+    --red: #b83232;
+    --red-bg: rgba(184,50,50,0.07);
+    --red-border: rgba(184,50,50,0.2);
+    --blue: #1a5fa5;
+    --blue-bg: rgba(26,95,165,0.07);
+    --blue-border: rgba(26,95,165,0.2);
+    --purple: #6b3fa0;
+    --purple-bg: rgba(107,63,160,0.07);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px; line-height: 1.6; }
+
+  .hero {
+    background: linear-gradient(150deg, #e8f4ee 0%, #f5f4f0 60%);
+    border-bottom: 1px solid var(--border2);
+    padding: 2.5rem 1.25rem 2rem;
+  }
+  .hero-label { font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--green); margin-bottom: 8px; }
+  .hero h1 { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 600; line-height: 1.2; color: var(--text); margin-bottom: 10px; }
+  .hero-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .pill { background: white; border: 1px solid var(--border2); border-radius: 20px; padding: 4px 12px; font-size: 12px; color: var(--text2); box-shadow: var(--shadow); }
+  .pill.green { background: var(--green-bg); border-color: var(--green-border); color: var(--green); }
+
+  .nav { display: flex; border-bottom: 1px solid var(--border2); background: white; position: sticky; top: 0; z-index: 100; overflow-x: auto; -webkit-overflow-scrolling: touch; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav button { background: none; border: none; border-bottom: 2px solid transparent; color: var(--text2); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 14px 16px; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+  .nav button.active { color: var(--green); border-bottom-color: var(--green); }
+
+  .section { display: none; padding: 1.25rem; max-width: 700px; }
+  .section.active { display: block; }
+
+  .card { background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.125rem; margin-bottom: 12px; box-shadow: var(--shadow); }
+  .card.conf { border-color: var(--green-border); background: linear-gradient(135deg, #f0faf5 0%, white 60%); }
+  .card.pend { border-color: var(--amber-border); border-style: dashed; }
+
+  .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
+  .card-title { font-size: 16px; font-weight: 500; color: var(--text); }
+  .card-sub { font-size: 13px; color: var(--text2); margin-top: 2px; }
+
+  .badge { font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; }
+  .badge-blue { background: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue-border); }
+  .badge-green { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+  .badge-amber { background: var(--amber-bg); color: var(--amber); border: 1px solid var(--amber-border); }
+  .badge-red { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); }
+
+  .detail-row { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; border-top: 1px solid var(--border); font-size: 13px; }
+  .detail-label { color: var(--text3); min-width: 90px; flex-shrink: 0; font-size: 12px; padding-top: 1px; }
+  .detail-val { color: var(--text); word-break: break-word; }
+  .detail-val.mono { font-family: 'Courier New', monospace; font-size: 12px; color: var(--amber); letter-spacing: 0.04em; }
+
+  .seats { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .seat { background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 6px 12px; font-size: 12px; color: var(--text2); }
+  .seat span { color: var(--text); font-weight: 500; }
+
+  .route { display: flex; overflow-x: auto; -webkit-overflow-scrolling: touch; padding: 1rem 0 0.5rem; align-items: flex-start; }
+  .route::-webkit-scrollbar { height: 3px; }
+  .route::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+  .route-stop { text-align: center; flex-shrink: 0; width: 66px; }
+  .rdot { width: 36px; height: 36px; border-radius: 50%; margin: 0 auto 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; border: 2px solid; }
+  .rdot.c { background: var(--green-bg); border-color: var(--green); color: var(--green); }
+  .rdot.p { background: var(--amber-bg); border-color: var(--amber); color: var(--amber); }
+  .rlabel { font-size: 11px; color: var(--text2); line-height: 1.3; }
+  .rdate { font-size: 9px; color: var(--text3); margin-top: 2px; }
+  .rseg { flex: 1; height: 1px; background: var(--border2); margin-top: 18px; min-width: 10px; }
+
+  .alert { display: flex; gap: 8px; align-items: flex-start; background: var(--red-bg); border: 1px solid var(--red-border); border-radius: var(--radius-sm); padding: 8px 12px; font-size: 12px; color: var(--red); margin-top: 10px; line-height: 1.4; }
+  .alert-ok { display: flex; gap: 8px; align-items: flex-start; background: var(--amber-bg); border: 1px solid var(--amber-border); border-radius: var(--radius-sm); padding: 8px 12px; font-size: 12px; color: var(--amber); margin-top: 10px; line-height: 1.4; }
+
+  .sec-head { font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); margin: 1.5rem 0 12px; }
+  .sec-head:first-child { margin-top: 0; }
+
+  .legend { display: flex; gap: 16px; margin-bottom: 14px; flex-wrap: wrap; }
+  .leg-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); }
+  .leg-dot { width: 8px; height: 8px; border-radius: 2px; }
+
+  .map-link { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--blue); text-decoration: none; margin-top: 8px; padding: 5px 10px; background: var(--blue-bg); border-radius: 6px; border: 1px solid var(--blue-border); }
+  .pdf-btn { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--purple); text-decoration: none; margin-top: 8px; margin-left: 6px; padding: 5px 10px; background: var(--purple-bg); border-radius: 6px; border: 1px solid rgba(107,63,160,0.2); cursor: pointer; }
+
+  .check-list { margin-top: 8px; }
+  .check-item { display: flex; align-items: flex-start; gap: 8px; padding: 5px 0; border-top: 1px solid var(--border); font-size: 13px; color: var(--text2); }
+  .check-item span { color: var(--green); font-size: 14px; flex-shrink: 0; }
+
+  .info-box { background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; color: var(--text2); margin-top: 10px; line-height: 1.5; }
+
+  #map { height: 440px; border-radius: 12px; overflow: hidden; margin-bottom: 16px; border: 1px solid var(--border2); box-shadow: var(--shadow); }
+  .leaflet-popup-content-wrapper { background: white; color: var(--text); border: 1px solid var(--border2); border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+  .leaflet-popup-tip { background: white; }
+  .leaflet-popup-content { margin: 10px 14px; font-family: 'DM Sans', sans-serif; font-size: 13px; line-height: 1.5; }
+  .leaflet-popup-content strong { color: var(--green); font-size: 14px; display: block; margin-bottom: 3px; }
+  .leaflet-popup-content span { color: var(--text2); font-size: 12px; display: block; }
+  .pop-date { color: var(--amber) !important; font-size: 11px !important; }
+
+
+  /* Simple access screen (not real security, just a courtesy password) */
+  body.auth-locked > *:not(#authOverlay) { display: none !important; }
+  #authOverlay {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    background: linear-gradient(150deg, #e8f4ee 0%, #f5f4f0 60%);
+  }
+  .auth-card {
+    width: 100%;
+    max-width: 380px;
+    background: white;
+    border: 1px solid var(--border2);
+    border-radius: 18px;
+    box-shadow: 0 10px 35px rgba(0,0,0,0.12);
+    padding: 1.5rem;
+    text-align: center;
+  }
+  .auth-card h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    margin-bottom: 0.25rem;
+  }
+  .auth-card p { color: var(--text2); font-size: 14px; margin-bottom: 1rem; }
+  .auth-card input {
+    width: 100%;
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+  .auth-card button {
+    width: 100%;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 14px;
+    background: var(--green);
+    color: white;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .auth-error { color: var(--red) !important; min-height: 20px; margin: 10px 0 0 !important; font-size: 13px !important; }
+
+</style>
+
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0f6e47">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Croacia 2026">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" href="icons/favicon.ico">
+</head>
+<body class="auth-locked">
+
+<div id="authOverlay">
+  <div class="auth-card">
+    <div class="hero-label">✈ Viaje · Junio 2026</div>
+    <h1>Belgrado + Croacia</h1>
+    <p>Introduce la contraseña para acceder a la app del viaje.</p>
+    <input id="authPassword" type="password" placeholder="Contraseña" autocomplete="current-password">
+    <button id="authButton" type="button">Entrar</button>
+    <p id="authError" class="auth-error"></p>
+  </div>
+</div>
+<script>
+(function () {
+  const PASSWORD = 'plitvice';
+  const KEY = 'croacia2026_access_ok';
+
+  function unlock() {
+    document.body.classList.remove('auth-locked');
+    const overlay = document.getElementById('authOverlay');
+    if (overlay) overlay.remove();
+  }
+
+  function checkPassword() {
+    const input = document.getElementById('authPassword');
+    const error = document.getElementById('authError');
+    if ((input.value || '').trim().toLowerCase() === PASSWORD) {
+      localStorage.setItem(KEY, '1');
+      unlock();
+    } else {
+      error.textContent = 'Contraseña incorrecta';
+      input.select();
+    }
+  }
+
+  if (localStorage.getItem(KEY) === '1') {
+    unlock();
+  } else {
+    document.addEventListener('DOMContentLoaded', function () {
+      const input = document.getElementById('authPassword');
+      const button = document.getElementById('authButton');
+      if (button) button.addEventListener('click', checkPassword);
+      if (input) {
+        input.focus();
+        input.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') checkPassword();
+        });
+      }
+    });
+  }
+})();
+</script>
+
+
+<div class="hero">
+  <div class="hero-label">✈ Viaje · Junio 2026</div>
+  <h1>Belgrado<br>+ Croacia</h1>
+  <div class="hero-meta">
+    <span class="pill">Ismael · Ignacio · Manuel</span>
+    <span class="pill">6 – 17 jun 2026</span>
+    <span class="pill green">Todo confirmado ✓</span>
+  </div>
+</div>
+
+<nav class="nav">
+  <button class="active" onclick="show('ruta',this)">🗺 Ruta</button>
+  <button onclick="show('vuelos',this)">✈ Vuelos</button>
+  <button onclick="show('alojamientos',this)">🏠 Alojam.</button>
+  <button onclick="show('coche',this)">🚗 Coche</button>
+  <button onclick="show('plitvice',this)">🏞 Plitvice</button>
+  <button onclick="show('cancelaciones',this)">⚠ Fechas</button>
+  <button onclick="show('mapa',this);initMap()">📍 Mapa</button>
+</nav>
+
+<!-- RUTA -->
+<div id="ruta" class="section active">
+  <p class="sec-head">Recorrido completo</p>
+  <div class="route">
+    <div class="route-stop"><div class="rdot c">BEG</div><div class="rlabel">Belgrado</div><div class="rdate">6–7 jun</div></div>
+    <div class="rseg"></div>
+    <div class="route-stop"><div class="rdot c">ZAG</div><div class="rlabel">Zagreb</div><div class="rdate">7–8 jun</div></div>
+    <div class="rseg"></div>
+    <div class="route-stop"><div class="rdot c">PUL</div><div class="rlabel">Pula</div><div class="rdate">8–9 jun</div></div>
+    <div class="rseg"></div>
+    <div class="route-stop"><div class="rdot c">SLU</div><div class="rlabel">Slunj</div><div class="rdate">9–10 jun</div></div>
+    <div class="rseg"></div>
+    <div class="route-stop"><div class="rdot c">ZAD</div><div class="rlabel">Zadar</div><div class="rdate">10–11 jun</div></div>
+    <div class="rseg"></div>
+    <div class="route-stop"><div class="rdot c">SPL</div><div class="rlabel">Split</div><div class="rdate">11–13 jun</div></div>
+    <div class="rseg"></div>
+    <div class="route-stop"><div class="rdot c">HVR</div><div class="rlabel">Hvar</div><div class="rdate">13–14 jun</div></div>
+    <div class="rseg"></div>
+    <div class="route-stop"><div class="rdot c">DBV</div><div class="rlabel">Dubrovnik</div><div class="rdate">14–17 jun</div></div>
+  </div>
+
+  <p class="sec-head">Día a día</p>
+
+  <div class="card">
+    <div class="card-header"><div><div class="card-title">Sáb 6 jun — Día 1</div><div class="card-sub">Madrid → Belgrado</div></div><span class="badge badge-blue">vuelo</span></div>
+    <div class="detail-row"><div class="detail-label">Vuelo</div><div class="detail-val">JU571 · Sale 12:30 MAD T1 · Boarding 12:00</div></div>
+    <div class="detail-row"><div class="detail-label">Llegada</div><div class="detail-val">Belgrado ~17:00–17:30 en el apartamento</div></div>
+    <div class="detail-row"><div class="detail-label">Dormir</div><div class="detail-val">Colorway Apartment · Šantićeva 13 02</div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div><div class="card-title">Dom 7 jun — Día 2</div><div class="card-sub">Belgrado → Zagreb · Recogida coche</div></div><span class="badge badge-blue">vuelo + coche</span></div>
+    <div class="detail-row"><div class="detail-label">Check-out</div><div class="detail-val">Antes 10:00–10:30</div></div>
+    <div class="detail-row"><div class="detail-label">Vuelo</div><div class="detail-val">JU602 · Sale 13:15 BEG T2 · Boarding 12:45</div></div>
+    <div class="detail-row"><div class="detail-label">Coche</div><div class="detail-val">Recogida 15:00 Zagreb Airport · Active rent a car</div></div>
+    <div class="detail-row"><div class="detail-label">Dormir</div><div class="detail-val">Magic Garden7 · Ilica 42, Zagreb</div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div><div class="card-title">Lun 8 jun — Día 3</div><div class="card-sub">Zagreb → Pula · ~3h</div></div><span class="badge badge-blue">coche</span></div>
+    <div class="detail-row"><div class="detail-label">Check-out</div><div class="detail-val">Antes 10:00</div></div>
+    <div class="detail-row"><div class="detail-label">Dormir</div><div class="detail-val">Apt Flanaticus I · Flanatička ulica 33, Pula</div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div><div class="card-title">Mar 9 jun — Día 4</div><div class="card-sub">Pula → Slunj (Rastoke) · ~2.5h</div></div><span class="badge badge-blue">coche</span></div>
+    <div class="detail-row"><div class="detail-label">Check-out</div><div class="detail-val">Antes 10:00</div></div>
+    <div class="detail-row"><div class="detail-label">Dormir</div><div class="detail-val">Aventurin Room II · Ulica Augusta Šenoe 12</div></div>
+    <div class="detail-row"><div class="detail-label">Llegada</div><div class="detail-val">Autónoma · caja seguridad llaves</div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div><div class="card-title">Mié 10 jun — Día 5</div><div class="card-sub">Slunj → Plitvice → Zadar</div></div><span class="badge badge-blue">coche + parque</span></div>
+    <div class="detail-row"><div class="detail-label">Check-out</div><div class="detail-val">Antes 10:00</div></div>
+    <div class="detail-row"><div class="detail-label">Plitvice</div><div class="detail-val">09:00–10:00 · Ulaz 1 · 3 entradas confirmadas</div></div>
+    <div class="detail-row"><div class="detail-label">Dormir</div><div class="detail-val">Apartman ALDO · Kaljska ulica 26, Zadar</div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div><div class="card-title">Jue–Vie 11–13 jun — Días 6–7</div><div class="card-sub">Zadar → Split · 2 noches</div></div><span class="badge badge-blue">coche ~1.5h</span></div>
+    <div class="detail-row"><div class="detail-label">Check-out</div><div class="detail-val">Sáb 13 jun antes 10:00</div></div>
+    <div class="detail-row"><div class="detail-label">Dormir</div><div class="detail-val">Apartman Suteren · Lučićeva ulica 9, Split</div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div><div class="card-title">Sáb 13 jun — Día 8</div><div class="card-sub">Split → Hvar (ferry ~1h)</div></div><span class="badge badge-blue">ferry</span></div>
+    <div class="detail-row"><div class="detail-label">Nota</div><div class="detail-val">Coche se queda en Split. Ferry Split–Hvar.</div></div>
+    <div class="detail-row"><div class="detail-label">Dormir</div><div class="detail-val">Room 6 · Ive Roića 78, Hvar</div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div><div class="card-title">Dom 14 – Mié 17 jun — Días 9–11</div><div class="card-sub">Hvar → Dubrovnik · 3 noches</div></div><span class="badge badge-blue">ferry + coche</span></div>
+    <div class="detail-row"><div class="detail-label">Check-in</div><div class="detail-val">Desde 15:00 · Llegada ~21:00–22:00</div></div>
+    <div class="detail-row"><div class="detail-label">Dormir</div><div class="detail-val">Studios Manhattan · Ul. dr. Ante Starčevića 91</div></div>
+    <div class="detail-row"><div class="detail-label">Parking</div><div class="detail-val">Gratuito en el hotel ✓</div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div><div class="card-title">Mié 17 jun — Día 12</div><div class="card-sub">Vuelta a casa</div></div><span class="badge badge-blue">vuelo</span></div>
+    <div class="detail-row"><div class="detail-label">Coche</div><div class="detail-val">Entrega Dubrovnik Airport 06:30</div></div>
+    <div class="detail-row"><div class="detail-label">Vuelo</div><div class="detail-val">VY7721 · Sale 08:55 DBV → BCN · Llega 11:25</div></div>
+  </div>
+</div>
+
+<!-- VUELOS -->
+<div id="vuelos" class="section">
+  <p class="sec-head">Vuelo de ida</p>
+  <div class="card conf">
+    <div class="card-header"><div><div class="card-title">Madrid → Belgrado</div><div class="card-sub">Air Serbia · Sáb 6 jun 2026</div></div><span class="badge badge-green">Confirmado</span></div>
+    <div class="detail-row"><div class="detail-label">Vuelo</div><div class="detail-val">JU 571</div></div>
+    <div class="detail-row"><div class="detail-label">Salida</div><div class="detail-val">12:30 · Terminal 1 · Barajas (MAD)</div></div>
+    <div class="detail-row"><div class="detail-label">Boarding</div><div class="detail-val">12:00 · Zona 2</div></div>
+    <div class="detail-row"><div class="detail-label">Localizador</div><div class="detail-val mono">MJJJLE</div></div>
+    <div class="seats">
+      <div class="seat">Ismael <span>16A</span></div>
+      <div class="seat">Ignacio <span>16B</span></div>
+      <div class="seat">Manuel <span>16C</span></div>
+    </div>
+    <div style="margin-top:10px;">
+      <button class="pdf-btn" onclick="openPDF('ismael_as')">📄 Boarding Ismael</button>
+      <button class="pdf-btn" onclick="openPDF('ignacio_as')">📄 Boarding Ignacio</button>
+      <button class="pdf-btn" onclick="openPDF('manuel_as')">📄 Boarding Manuel</button>
+    </div>
+  </div>
+
+  <p class="sec-head">Vuelo interno</p>
+  <div class="card conf">
+    <div class="card-header"><div><div class="card-title">Belgrado → Zagreb</div><div class="card-sub">Air Serbia · Dom 7 jun 2026</div></div><span class="badge badge-green">Confirmado</span></div>
+    <div class="detail-row"><div class="detail-label">Vuelo</div><div class="detail-val">JU 602</div></div>
+    <div class="detail-row"><div class="detail-label">Salida</div><div class="detail-val">13:15 · Terminal 2 (BEG)</div></div>
+    <div class="detail-row"><div class="detail-label">Boarding</div><div class="detail-val">12:45</div></div>
+    <div class="detail-row"><div class="detail-label">Localizador</div><div class="detail-val mono">MJJJLE</div></div>
+    <div class="seats">
+      <div class="seat">Ismael <span>6A</span></div>
+      <div class="seat">Ignacio <span>6C</span></div>
+      <div class="seat">Manuel <span>6D</span></div>
+    </div>
+    <div style="margin-top:10px;">
+      <button class="pdf-btn" onclick="openPDF('ismael_as')">📄 Boarding Ismael</button>
+      <button class="pdf-btn" onclick="openPDF('ignacio_as')">📄 Boarding Ignacio</button>
+      <button class="pdf-btn" onclick="openPDF('manuel_as')">📄 Boarding Manuel</button>
+    </div>
+  </div>
+
+  <p class="sec-head">Vuelo de vuelta</p>
+  <div class="card conf">
+    <div class="card-header"><div><div class="card-title">Dubrovnik → Barcelona</div><div class="card-sub">Vueling · Mié 17 jun 2026</div></div><span class="badge badge-green">Confirmado</span></div>
+    <div class="detail-row"><div class="detail-label">Vuelo</div><div class="detail-val">VY 7721</div></div>
+    <div class="detail-row"><div class="detail-label">Salida</div><div class="detail-val">08:55 · Dubrovnik Airport (DBV)</div></div>
+    <div class="detail-row"><div class="detail-label">Llegada</div><div class="detail-val">11:25 · Barcelona (BCN)</div></div>
+    <div class="detail-row"><div class="detail-label">Localizador</div><div class="detail-val mono">XNQD3N</div></div>
+    <div class="detail-row"><div class="detail-label">Precio</div><div class="detail-val">€57 · 3 pasajeros</div></div>
+    <div class="detail-row"><div class="detail-label">Equipaje</div><div class="detail-val">1 bulto bajo asiento 40×30×20 cm · Sin maleta cabina</div></div>
+    <div style="margin-top:10px;"><button class="pdf-btn" onclick="openPDF('vuelta')">📄 Confirmación Vueling</button></div>
+    <div class="alert-ok" style="margin-top:10px;">⚠ Check-in online disponible 24h antes · Asientos sin asignar aún</div>
+  </div>
+</div>
+
+<!-- ALOJAMIENTOS -->
+<div id="alojamientos" class="section">
+  <p class="sec-head">🇷🇸 Serbia</p>
+  <div class="card conf">
+    <div class="card-header"><div><div class="card-title">Belgrado · 6→7 jun</div><div class="card-sub">1 noche · Booking</div></div><span class="badge badge-green">Confirmado</span></div>
+    <div class="detail-row"><div class="detail-label">Alojamiento</div><div class="detail-val">Colorway Apartment</div></div>
+    <div class="detail-row"><div class="detail-label">Dirección</div><div class="detail-val">Šantićeva 13 02, Stari Grad, 11000 Belgrado</div></div>
+    <div class="detail-row"><div class="detail-label">Teléfono</div><div class="detail-val">+381 60 3777244</div></div>
+    <div class="detail-row"><div class="detail-label">Check-in</div><div class="detail-val">14:30 – 23:00</div></div>
+    <div class="detail-row"><div class="detail-label">Check-out</div><div class="detail-val">10:00 – 10:30</div></div>
+    <div class="detail-row"><div class="detail-label">Confirmación</div><div class="detail-val mono">6724.534.484 · PIN 6824</div></div>
+    <div class="detail-row"><div class="detail-label">Precio</div><div class="detail-val">€78,45 · Solo efectivo ⚠️</div></div>
+    <a class="map-link" href="https://maps.google.com/?q=Šantićeva+13,+Beograd">📍 Maps</a>
+    <button class="pdf-btn" onclick="openPDF('belgrado')">📄 Reserva PDF</button>
+  </div>
+
+  <p class="sec-head">🇭🇷 Croacia</p>
+  <div class="card conf">
+    <div class="card-header"><div><div class="card-title">Zagreb · 7→8 jun</div><div class="card-sub">1 noche · Airbnb</div></div><span class="badge badge-green">Confirmado</span></div>
+    <div class="detail-row"><div class="detail-label">Alojamiento</div><div class="detail-val">Magic Garden7 Zagreb Center</div></div>
+    <div class="detail-row"><div class="detail-label">Anfitrión</div><div class="detail-val">Marcel</div></div>
+    <div class="detail-row"><div class="detail-label">Dirección</div><div class="detail-val">Ilica 42 (patio, edificio izq.), Zagreb 10000</div></div>
+    <div class="detail-row"><div class="detail-label">Check-out</div><div class="detail-val">Antes 10:00</div></div>
+    <div class="detail-row"><div class="detail-label">Llegada</div><div class="detail-val">Autónoma · Cerradura con teclado</div></div>
+    <div class="detail-row"><div class="detail-label">Confirmación</div><div class="detail-val mono">HMMRAWFKM8</div></div>
+    <div class="alert"><div>🚫 No reembolsable</div></div>
+    <a class="map-link" href="https://maps.google.com/?q=Ilica+42,+Zagreb">📍 Maps</a>
+    <button class="pdf-btn" onclick="openPDF('zagreb')">📄 Reserva PDF</button>
+  </div>
+
+  <div class="card conf">
+    <div class="card-header"><div><div class="card-title">Pula · 8→9 jun</div><div class="card-sub">1 noche · Airbnb</div></div><span class="badge badge-green">Confirmado</span></div>
+    <div class="detail-row"><div class="detail-label">Alojamiento</div><div class="detail-val">Apartment Flanaticus I</div></div>
+    <div class="detail-row"><div class="detail-label">Anfitrión</div><div class="detail-val">Dea</div></div>
+    <div class="detail-row"><div class="detail-label">Dirección</div><div class="detail-val">Flanatička ulica 33, Pula</div></div>
+    <div class="detail-row"><div class="detail-label">Check-out</div><div class="detail-val">Antes 10:00</div></div>
+    <div class="detail-row"><div class="detail-label">Confirmación</div><div class="detail-val mono">HMCZADMZEK</div></div>
+    <div class="alert"><div>🚫 No reembolsable</div></div>
+    <a class="map-link" href="https://maps.google.com/?q=Flanatička+ulica+33,+Pula">📍 Maps</a>
+    <button class="pdf-btn" onclick="openPDF('pula')">📄 Reserva PDF</button>
+  </div>
+
+  <div class="card conf">
+    <div class="card-header"><div><div class="card-title">Slunj (Rastoke) · 9→10 jun</div><div class="card-sub">1 noche · Airbnb</div></div><span class="badge badge-green">Confirmado</span></div>
+    <div class="detail-row"><div class="detail-label">Alojamiento</div><div class="detail-val">Aventurin Room II</div></div>
+    <div class="detail-row"><div class="detail-label">Anfitrión</div><div class="detail-val">Robert (coanf: Jelena)</div></div>
+    <div class="detail-row"><div class="detail-label">Dirección</div><div class="detail-val">Ulica Augusta Šenoe 12, Slunj</div></div>
+    <div class="detail-row"><div class="detail-label">Llegada</div><div class="detail-val">Autónoma · caja seguridad llaves</div></div>
+    <div class="detail-row"><div class="detail-label">Confirmación</div><div class="detail-val mono">HM8MQP2REK</div></div>
+    <div class="detail-row"><div class="detail-label">Precio</div><div class="detail-val">€52,68 pagado</div></div>
+    <div class="alert-ok">⏰ Cancelación gratuita hasta 8 jun 13:00</div>
+    <a class="map-link" href="https://maps.google.com/?q=Ulica+Augusta+Šenoe+12,+Slunj">📍 Maps</a>
+    <button class="pdf-btn" onclick="openPDF('slunj')">📄 Reserva PDF</button>
+  </div>
+
+  <div class="card conf">
+    <div class="card-header"><div><div class="card-title">Zadar · 10→11 jun</div><div class="card-sub">1 noche · Airbnb</div></div><span class="badge badge-green">Confirmado</span></div>
+    <div class="detail-row"><div class="detail-label">Alojamiento</div><div class="detail-val">Apartman ALDO</div></div>
+    <div class="detail-row"><div class="detail-label">Anfitrión</div><div class="detail-val">Aldo</div></div>
+    <div class="detail-row"><div class="detail-label">Dirección</div><div class="detail-val">Kaljska ulica 26, Zadar 23000</div></div>
+    <div class="detail-row"><div class="detail-label">Llegada</div><div class="detail-val">Recepción por el anfitrión</div></div>
+    <div class="detail-row"><div class="detail-label">Confirmación</div><div class="detail-val mono">HMDRARN52A</div></div>
+    <div class="alert-ok">⏰ Cancelación gratuita hasta 9 jun 15:00</div>
+    <a class="map-link" href="https://maps.google.com/?q=Kaljska+ulica+26,+Zadar">📍 Maps</a>
+    <button class="pdf-btn" onclick="openPDF('zadar')">📄 Reserva PDF</button>
+  </div>
+
+  <div class="card conf">
+    <div class="card-header"><div><div class="card-title">Split · 11→13 jun</div><div class="card-sub">2 noches · Airbnb</div></div><span class="badge badge-green">Confirmado</span></div>
+    <div class="detail-row"><div class="detail-label">Alojamiento</div><div class="detail-val">Apartman Suteren</div></div>
+    <div class="detail-row"><div class="detail-label">Anfitrión</div><div class="detail-val">Ante</div></div>
+    <div class="detail-row"><div class="detail-label">Dirección</div><div class="detail-val">Lučićeva ulica 9, Split 21000</div></div>
+    <div class="detail-row"><div class="detail-label">Llegada</div><div class="detail-val">Recepción por el anfitrión</div></div>
+    <div class="detail-row"><div class="detail-label">Confirmación</div><div class="detail-val mono">HMTR2FWJ3S</div></div>
+    <div class="alert"><div>🚫 Cancelación gratuita caducada</div></div>
+    <a class="map-link" href="https://maps.google.com/?q=Lučićeva+ulica+9,+Split">📍 Maps</a>
+    <button class="pdf-btn" onclick="openPDF('split')">📄 Reserva PDF</button>
+  </div>
+
+  <div class="card conf">
+    <div class="card-header"><div><div class="card-title">Hvar · 13→14 jun</div><div class="card-sub">1 noche · Airbnb</div></div><span class="badge badge-green">Confirmado</span></div>
+    <div class="detail-row"><div class="detail-label">Alojamiento</div><div class="detail-val">Room 6</div></div>
+    <div class="detail-row"><div class="detail-label">Anfitrión</div><div class="detail-val">Anes</div></div>
+    <div class="detail-row"><div class="detail-label">Dirección</div><div class="detail-val">Ive Roića 78, Hvar 21450</div></div>
+    <div class="detail-row"><div class="detail-label">Confirmación</div><div class="detail-val mono">HMERQWE9M8</div></div>
+    <div class="alert-ok">⏰ Cancelación gratuita hasta 8 jun 12:00</div>
+    <a class="map-link" href="https://maps.google.com/?q=Ive+Roića+78,+Hvar">📍 Maps</a>
+    <button class="pdf-btn" onclick="openPDF('hvar')">📄 Reserva PDF</button>
+  </div>
+
+  <div class="card conf">
+    <div class="card-header"><div><div class="card-title">Dubrovnik · 14→17 jun</div><div class="card-sub">3 noches · Booking</div></div><span class="badge badge-green">Confirmado</span></div>
+    <div class="detail-row"><div class="detail-label">Alojamiento</div><div class="detail-val">Studios Manhattan</div></div>
+    <div class="detail-row"><div class="detail-label">Dirección</div><div class="detail-val">91 Ulica doktor Ante Starčevića, 20000 Dubrovnik</div></div>
+    <div class="detail-row"><div class="detail-label">Teléfono</div><div class="detail-val">+385 91 880 1773</div></div>
+    <div class="detail-row"><div class="detail-label">Check-in</div><div class="detail-val">Dom 14 jun desde 15:00 (llegada ~21–22h)</div></div>
+    <div class="detail-row"><div class="detail-label">Check-out</div><div class="detail-val">Mié 17 jun 00:00–10:00</div></div>
+    <div class="detail-row"><div class="detail-label">Confirmación</div><div class="detail-val mono">6217.779.032 · PIN 7088</div></div>
+    <div class="detail-row"><div class="detail-label">Precio</div><div class="detail-val">€399 · 3 personas</div></div>
+    <div class="detail-row"><div class="detail-label">Parking</div><div class="detail-val">Gratuito ✓ (solicitado)</div></div>
+    <div class="alert"><div>🚫 Sin reembolso desde 24 may 2026</div></div>
+    <a class="map-link" href="https://maps.google.com/?q=Ulica+doktor+Ante+Starčevića+91,+Dubrovnik">📍 Maps</a>
+    <button class="pdf-btn" onclick="openPDF('dubrovnik')">📄 Reserva PDF</button>
+  </div>
+</div>
+
+<!-- COCHE -->
+<div id="coche" class="section">
+  <p class="sec-head">Alquiler de coche</p>
+  <div class="card conf">
+    <div class="card-header"><div><div class="card-title">Skoda Fabia o similar</div><div class="card-sub">Active Rent a Car · DiscoverCars</div></div><span class="badge badge-green">Confirmado</span></div>
+    <div class="detail-row"><div class="detail-label">Conductor</div><div class="detail-val">Manuel Lopez De Lucas (principal)</div></div>
+    <div class="detail-row"><div class="detail-label">Reserva</div><div class="detail-val mono">FS-D013781348-ATJX</div></div>
+    <div class="detail-row"><div class="detail-label">Recogida</div><div class="detail-val">Dom 7 jun · 15:00 · Zagreb Airport · Terminal · Mostrador Active</div></div>
+    <div class="detail-row"><div class="detail-label">Tel. Zagreb</div><div class="detail-val">0038514673344</div></div>
+    <div class="detail-row"><div class="detail-label">Entrega</div><div class="detail-val">Mié 17 jun · 06:30 · Dubrovnik Airport</div></div>
+    <div class="detail-row"><div class="detail-label">Tel. Dubrovnik</div><div class="detail-val">00385996076291</div></div>
+    <div class="detail-row"><div class="detail-label">Pago recogida</div><div class="detail-val">€130 (one-way €100 + fuera horario €30)</div></div>
+    <div class="detail-row"><div class="detail-label">Fianza</div><div class="detail-val">€800 bloqueados en tarjeta crédito de Manuel</div></div>
+    <div class="detail-row"><div class="detail-label">Combustible</div><div class="detail-val">Full-to-full · Devolver lleno</div></div>
+    <button class="pdf-btn" style="margin-top:10px;" onclick="openPDF('coche')">📄 Vale de alquiler PDF</button>
+  </div>
+
+  <p class="sec-head">Seguro · Full Coverage</p>
+  <div class="card conf">
+    <div class="card-header"><div><div class="card-title">Cobertura Total · Sincera Insurance</div><div class="card-sub">Limit €3.000 · todos los conductores cubiertos</div></div><span class="badge badge-green">Activo</span></div>
+    <div class="detail-row"><div class="detail-label">Póliza</div><div class="detail-val mono">P-FC-26-UM1KX8D8</div></div>
+    <div class="detail-row"><div class="detail-label">Vigencia</div><div class="detail-val">7 jun 15:00 → 17 jun 06:30</div></div>
+    <div class="detail-row"><div class="detail-label">Prima</div><div class="detail-val">€56,88 ya pagada</div></div>
+    <div class="check-list">
+      <div class="check-item"><span>✓</span><div>Carrocería, techo, cristales, retrovisores, ruedas, bajos</div></div>
+      <div class="check-item"><span>✓</span><div>Robo, vandalismo, hit-and-run</div></div>
+      <div class="check-item"><span>✓</span><div>Taxi, grúa, pérdida llaves, repostaje incorrecto</div></div>
+    </div>
+    <div class="info-box">En el mostrador te ofrecerán seguro adicional — puedes rechazarlo. Si insisten, pídelo por escrito y contacta DiscoverCars.</div>
+    <button class="pdf-btn" style="margin-top:10px;" onclick="openPDF('seguro')">📄 Póliza seguro PDF</button>
+  </div>
+
+  <p class="sec-head">Documentos para la recogida</p>
+  <div class="card">
+    <div class="check-list">
+      <div class="check-item"><span>✓</span><div>Voucher de reserva (PDF adjunto)</div></div>
+      <div class="check-item"><span>✓</span><div>Carnet de conducir físico de Manuel</div></div>
+      <div class="check-item"><span>✓</span><div>Pasaporte o DNI</div></div>
+      <div class="check-item"><span>✓</span><div>Tarjeta de crédito física Visa/MasterCard a nombre de Manuel · NO débito · NO Apple/Google Pay</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- PLITVICE -->
+<div id="plitvice" class="section">
+  <p class="sec-head">🏞 Parque Nacional Plitvice Lakes</p>
+  <div class="card conf">
+    <div class="card-header"><div><div class="card-title">3 entradas · Adultos</div><div class="card-sub">Plitvička Jezera · Mié 10 jun 2026</div></div><span class="badge badge-green">Confirmado</span></div>
+    <div class="detail-row"><div class="detail-label">Fecha</div><div class="detail-val">Miércoles 10 junio 2026</div></div>
+    <div class="detail-row"><div class="detail-label">Horario</div><div class="detail-val"><strong>09:00 – 10:00 · Ulaz 1 / Entrada 1</strong></div></div>
+    <div class="detail-row"><div class="detail-label">Precio</div><div class="detail-val">3 × €40 = €120 total</div></div>
+    <div class="detail-row"><div class="detail-label">Titular</div><div class="detail-val">Ignacio Gutiérrez Ruiz</div></div>
+    <div class="detail-row"><div class="detail-label">Nº tickets</div><div class="detail-val mono" style="font-size:11px;">26832916915 · 26473405115 · 26981063415</div></div>
+    <div class="detail-row"><div class="detail-label">Soporte</div><div class="detail-val">+385 53 751 928 · support@np-plitvicka-jezera.hr</div></div>
+    <div class="alert-ok">⚠ Ticket en el móvil o impreso · Validar en Ulaz 1 · No cancelable</div>
+    <button class="pdf-btn" style="margin-top:10px;" onclick="openPDF('plitvice')">📄 Entradas PDF</button>
+    <a class="map-link" href="https://maps.google.com/?q=Plitvička+jezera+National+Park">📍 Maps</a>
+  </div>
+
+  <p class="sec-head">Normas del parque</p>
+  <div class="card">
+    <div class="check-list">
+      <div class="check-item"><span style="color:var(--red)">✗</span><div>No salir de senderos · No bañarse · No pescar · No acampar</div></div>
+      <div class="check-item"><span style="color:var(--red)">✗</span><div>No drones · No bicicletas · No dar de comer a animales</div></div>
+      <div class="check-item"><span>✓</span><div>Llevar calzado de senderismo (no chanclas)</div></div>
+      <div class="check-item"><span>✓</span><div>Emergencias: 112 · Info parque: +385 53 751 015</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- CANCELACIONES -->
+<div id="cancelaciones" class="section">
+  <p class="sec-head">⚠ Fechas límite</p>
+  <div class="card" style="border-color:var(--amber-border);">
+    <div class="card-header"><div><div class="card-title">Hvar · Room 6</div><div class="card-sub">HMERQWE9M8</div></div><span class="badge badge-amber">Dom 8 jun 12:00</span></div>
+    <div class="detail-row"><div class="detail-label">Límite</div><div class="detail-val">Domingo 8 junio a las 12:00</div></div>
+    <div class="detail-row"><div class="detail-label">Después</div><div class="detail-val">Sin reembolso</div></div>
+  </div>
+  <div class="card" style="border-color:var(--amber-border);">
+    <div class="card-header"><div><div class="card-title">Slunj · Aventurin Room II</div><div class="card-sub">HM8MQP2REK</div></div><span class="badge badge-amber">Dom 8 jun 13:00</span></div>
+    <div class="detail-row"><div class="detail-label">Límite</div><div class="detail-val">Domingo 8 junio a las 13:00</div></div>
+    <div class="detail-row"><div class="detail-label">Después</div><div class="detail-val">Sin reembolso (€52,68)</div></div>
+  </div>
+  <div class="card" style="border-color:var(--amber-border);">
+    <div class="card-header"><div><div class="card-title">Zadar · Apartman ALDO</div><div class="card-sub">HMDRARN52A</div></div><span class="badge badge-amber">Lun 9 jun 15:00</span></div>
+    <div class="detail-row"><div class="detail-label">Límite</div><div class="detail-val">Lunes 9 junio a las 15:00</div></div>
+    <div class="detail-row"><div class="detail-label">Después</div><div class="detail-val">Sin reembolso</div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div><div class="card-title">Split · Apartman Suteren</div><div class="card-sub">HMTR2FWJ3S</div></div><span class="badge badge-red">Caducado</span></div>
+    <div class="detail-row"><div class="detail-label">Estado</div><div class="detail-val" style="color:var(--red);">Cancelación gratuita caducó el 6 jun 14:00</div></div>
+    <div class="detail-row"><div class="detail-label">Opción</div><div class="detail-val">Reembolso parcial si cancelas antes 11 jun 14:00</div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div><div class="card-title">Pula · Apt Flanaticus I</div><div class="card-sub">HMCZADMZEK</div></div><span class="badge badge-red">No reembolsable</span></div>
+    <div class="detail-row"><div class="detail-label">Política</div><div class="detail-val" style="color:var(--red);">Sin reembolso en ningún caso</div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div><div class="card-title">Zagreb · Magic Garden7</div><div class="card-sub">HMMRAWFKM8</div></div><span class="badge badge-red">No reembolsable</span></div>
+    <div class="detail-row"><div class="detail-label">Política</div><div class="detail-val" style="color:var(--red);">Sin reembolso en ningún caso</div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div><div class="card-title">Dubrovnik · Studios Manhattan</div><div class="card-sub">6217.779.032</div></div><span class="badge badge-red">No reembolsable</span></div>
+    <div class="detail-row"><div class="detail-label">Estado</div><div class="detail-val" style="color:var(--red);">Sin reembolso desde 24 may 2026</div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div><div class="card-title">Belgrado · Colorway Apartment</div><div class="card-sub">6724.534.484</div></div><span class="badge badge-red">Caducado</span></div>
+    <div class="detail-row"><div class="detail-label">Estado</div><div class="detail-val" style="color:var(--red);">€75 si cancelas ahora · No se pueden cambiar fechas</div></div>
+  </div>
+</div>
+
+<!-- MAPA -->
+<div id="mapa" class="section">
+  <p class="sec-head">Mapa interactivo de la ruta</p>
+  <div id="map"></div>
+  <div class="info-box">📍 Toca cada marcador para ver los detalles · Requiere conexión para cargar el fondo del mapa</div>
+  <div class="legend" style="margin-top:12px;">
+    <div class="leg-item"><div class="leg-dot" style="background:#0f6e47;"></div>Alojamiento</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#1a5fa5;"></div>Aeropuerto</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#8a5c00;"></div>Plitvice</div>
+  </div>
+</div>
+
+<script>
+const PDFS = {
+  "belgrado": "pdfs/belgrado.pdf",
+  "zagreb": "pdfs/zagreb.pdf",
+  "pula": "pdfs/pula.pdf",
+  "slunj": "pdfs/slunj.pdf",
+  "zadar": "pdfs/zadar.pdf",
+  "split": "pdfs/split.pdf",
+  "hvar": "pdfs/hvar.pdf",
+  "dubrovnik": "pdfs/dubrovnik.pdf",
+  "seguro": "pdfs/seguro.pdf",
+  "coche": "pdfs/coche.pdf",
+  "vuelta": "pdfs/vuelta.pdf",
+  "ismael_as": "pdfs/ismael_as.pdf",
+  "ignacio_as": "pdfs/ignacio_as.pdf",
+  "manuel_as": "pdfs/manuel_as.pdf",
+  "plitvice": "pdfs/plitvice.pdf"
+};
+function openPDF(key) {
+  const url = PDFS[key];
+  if (!url) { alert('PDF no encontrado'); return; }
+  window.open(url, '_blank');
+}
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./service-worker.js').catch(function(err) {
+      console.log('Service worker registration failed:', err);
+    });
+  });
+}
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
+<script>
+function show(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+var mapInit = false;
+function initMap() {
+  if (mapInit) return;
+  mapInit = true;
+  setTimeout(function() {
+    var map = L.map('map').setView([44.5, 16.5], 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap', maxZoom: 18
+    }).addTo(map);
+
+    function makeIcon(color, emoji) {
+      return L.divIcon({
+        className: '',
+        html: '<div style="width:34px;height:34px;border-radius:50%;background:' + color + ';display:flex;align-items:center;justify-content:center;font-size:15px;border:2px solid rgba(0,0,0,0.15);box-shadow:0 2px 8px rgba(0,0,0,0.2);">' + emoji + '</div>',
+        iconSize: [34,34], iconAnchor: [17,17], popupAnchor: [0,-20]
+      });
+    }
+
+    var stops = [
+      {lat:44.8125,lng:20.4612,color:'#d4f5e5',emoji:'🏠',name:'Belgrado',sub:'Colorway Apartment',date:'6→7 jun',addr:'Šantićeva 13 02'},
+      {lat:45.8150,lng:15.9819,color:'#d4f5e5',emoji:'🏠',name:'Zagreb',sub:'Magic Garden7',date:'7→8 jun',addr:'Ilica 42'},
+      {lat:44.8666,lng:13.8496,color:'#d4f5e5',emoji:'🏠',name:'Pula',sub:'Apt Flanaticus I',date:'8→9 jun',addr:'Flanatička ulica 33'},
+      {lat:44.8975,lng:15.5522,color:'#d4f5e5',emoji:'🏠',name:'Slunj',sub:'Aventurin Room II',date:'9→10 jun',addr:'Ulica Augusta Šenoe 12'},
+      {lat:44.8800,lng:15.6200,color:'#fef3c7',emoji:'🏞',name:'Plitvice Lakes',sub:'09:00 Ulaz 1 · 3 entradas',date:'10 jun',addr:'Parque Nacional UNESCO'},
+      {lat:44.1194,lng:15.2314,color:'#d4f5e5',emoji:'🏠',name:'Zadar',sub:'Apartman ALDO',date:'10→11 jun',addr:'Kaljska ulica 26'},
+      {lat:43.5081,lng:16.4402,color:'#d4f5e5',emoji:'🏠',name:'Split',sub:'Apartman Suteren',date:'11→13 jun',addr:'Lučićeva ulica 9'},
+      {lat:43.1727,lng:16.4413,color:'#d4f5e5',emoji:'🏠',name:'Hvar',sub:'Room 6 · anf. Anes',date:'13→14 jun',addr:'Ive Roića 78'},
+      {lat:42.6507,lng:18.0944,color:'#d4f5e5',emoji:'🏠',name:'Dubrovnik',sub:'Studios Manhattan',date:'14→17 jun',addr:'Ul. dr. Ante Starčevića 91'},
+      {lat:45.7415,lng:16.0688,color:'#dbeafe',emoji:'✈',name:'Zagreb Airport (ZAG)',sub:'Recogida coche · 15:00',date:'Dom 7 jun',addr:'Active Rent a Car'},
+      {lat:42.5614,lng:18.2685,color:'#dbeafe',emoji:'✈',name:'Dubrovnik Airport (DBV)',sub:'Entrega coche 06:30 · Vuelo 08:55',date:'Mié 17 jun',addr:'VY7721 → Barcelona'},
+    ];
+
+    var latlngs = stops.map(function(s){return [s.lat,s.lng];});
+    stops.forEach(function(s) {
+      L.marker([s.lat,s.lng],{icon:makeIcon(s.color,s.emoji)}).addTo(map)
+       .bindPopup('<strong>' + s.emoji + ' ' + s.name + '</strong><span>' + s.sub + '</span><span style="color:#8a5c00;font-size:11px;">📅 ' + s.date + '</span><span>📍 ' + s.addr + '</span>');
+    });
+    L.polyline(latlngs,{color:'#0f6e47',weight:2,opacity:0.4,dashArray:'6,8'}).addTo(map);
+    map.fitBounds(L.latLngBounds(latlngs),{padding:[30,30]});
+  }, 150);
+}
+</script>
+</body>
+</html>
