@@ -1,8 +1,8 @@
 {
   "name": "Croacia 2026",
   "short_name": "Croacia",
-  "start_url": "./index.html",
-  "scope": "./",
+  "start_url": "/Viaje-Croacia/",
+"scope": "/Viaje-Croacia/",
   "display": "standalone",
   "background_color": "#f5f4f0",
   "theme_color": "#0f6e47",
